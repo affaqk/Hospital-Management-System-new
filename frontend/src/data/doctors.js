@@ -1,0 +1,10 @@
+export const doctors = [
+  { name: 'Dr. Sarah Mitchell', specialty: 'Cardiologist', experience: '15 yrs', initials: 'SM', department: 'Cardiology', education: 'MD, Johns Hopkins University', bio: 'Specialist in interventional cardiology and complex coronary procedures.' },
+  { name: 'Dr. James Carter', specialty: 'Neurologist', experience: '12 yrs', initials: 'JC', department: 'Neurology', education: 'MD, Stanford University', bio: 'Expert in stroke management, epilepsy, and neurodegenerative disorders.' },
+  { name: 'Dr. Aisha Rahman', specialty: 'Pediatrician', experience: '10 yrs', initials: 'AR', department: 'Pediatrics', education: 'MD, Yale School of Medicine', bio: 'Dedicated to providing compassionate care for children from birth through adolescence.' },
+  { name: 'Dr. Robert Chen', specialty: 'Orthopedic Surgeon', experience: '18 yrs', initials: 'RC', department: 'Orthopedics', education: 'MD, Harvard Medical School', bio: 'Pioneer in minimally invasive joint replacement and sports medicine.' },
+  { name: 'Dr. Linda Foster', specialty: 'Emergency Medicine', experience: '14 yrs', initials: 'LF', department: 'Emergency Care', education: 'MD, University of Chicago', bio: 'Trauma specialist with extensive experience in critical care management.' },
+  { name: 'Dr. Michael Torres', specialty: 'Radiologist', experience: '11 yrs', initials: 'MT', department: 'Diagnostics', education: 'MD, Columbia University', bio: 'Expert in advanced imaging including MRI, CT, and interventional radiology.' },
+  { name: 'Dr. Priya Nair', specialty: 'Gynecologist', experience: '9 yrs', initials: 'PN', department: 'Gynecology', education: 'MD, UCSF School of Medicine', bio: "Focused on women's health, high-risk pregnancies, and minimally invasive surgery." },
+  { name: 'Dr. Kevin Walsh', specialty: 'Pulmonologist', experience: '13 yrs', initials: 'KW', department: 'Pulmonology', education: 'MD, Duke University', bio: 'Specialist in respiratory diseases, sleep disorders, and critical care.' },
+]
