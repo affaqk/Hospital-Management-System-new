@@ -1,23 +1,53 @@
 import axios from 'axios'
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { Mail, Lock, Eye, EyeOff, HeartPulse } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, HeartPulse, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react'
 
 const PatientLogin = () => {
   const navigate = useNavigate()
-  const [patient, setPatient] = useState({ email: '', password: '' })
+  const [patient, setPatient]   = useState({ email: '', password: '' })
   const [showPass, setShowPass] = useState(false)
+  const [loginError, setLoginError] = useState('')
+
+  const [view, setView]               = useState('login')
+  const [forgotEmail, setForgotEmail] = useState('')
+  const [forgotLoading, setForgotLoading] = useState(false)
+  const [forgotSent, setForgotSent]   = useState(false)
+  const [forgotError, setForgotError] = useState('')
 
   const handleChange = (e) => setPatient({ ...patient, [e.target.name]: e.target.value })
 
   const submitForm = async (e) => {
     e.preventDefault()
+    setLoginError('')
     try {
       await axios.post('http://localhost:8000/api/patients/login', patient, { withCredentials: true })
+      localStorage.setItem('role', 'patient')
       navigate('/patient/dashboard')
     } catch (error) {
-      console.log(error)
+      setLoginError(error.response?.data?.message || 'Invalid credentials.')
     }
+  }
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault()
+    setForgotError('')
+    setForgotLoading(true)
+    try {
+      await axios.post('http://localhost:8000/api/patients/reset-password-request', { email: forgotEmail })
+      setForgotSent(true)
+    } catch (error) {
+      setForgotError(error.response?.data?.message || 'Could not send reset email. Check the address and try again.')
+    } finally {
+      setForgotLoading(false)
+    }
+  }
+
+  const goBackToLogin = () => {
+    setView('login')
+    setForgotEmail('')
+    setForgotSent(false)
+    setForgotError('')
   }
 
   return (
@@ -66,69 +96,152 @@ const PatientLogin = () => {
             <span className="font-bold text-xl text-gray-800">MediCare</span>
           </div>
 
-          <div className="mb-8">
-            <div className="w-14 h-14 bg-violet-50 rounded-2xl flex items-center justify-center mb-4">
-              <HeartPulse size={26} className="text-violet-700" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900">Welcome back</h2>
-            <p className="text-gray-500 text-sm mt-1">Sign in to your patient account</p>
-          </div>
-
-          <form onSubmit={submitForm} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
-              <div className="relative">
-                <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="email"
-                  name="email"
-                  value={patient.email}
-                  onChange={handleChange}
-                  placeholder="your@email.com"
-                  required
-                  className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
-                />
+          {/* ── LOGIN VIEW ── */}
+          {view === 'login' && (
+            <>
+              <div className="mb-8">
+                <div className="w-14 h-14 bg-violet-50 rounded-2xl flex items-center justify-center mb-4">
+                  <HeartPulse size={26} className="text-violet-700" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900">Welcome back</h2>
+                <p className="text-gray-500 text-sm mt-1">Sign in to your patient account</p>
               </div>
-            </div>
 
-            <div>
-              <div className="flex justify-between items-center mb-1.5">
-                <label className="text-sm font-medium text-gray-700">Password</label>
-                <button type="button" className="text-xs text-violet-600 hover:underline">Forgot password?</button>
-              </div>
-              <div className="relative">
-                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  type={showPass ? 'text' : 'password'}
-                  name="password"
-                  value={patient.password}
-                  onChange={handleChange}
-                  placeholder="••••••••"
-                  required
-                  className="w-full pl-10 pr-10 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+              {loginError && (
+                <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-xl mb-5">
+                  <AlertCircle size={15} className="shrink-0" /> {loginError}
+                </div>
+              )}
+
+              <form onSubmit={submitForm} className="space-y-5">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
+                  <div className="relative">
+                    <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="email" name="email" value={patient.email} onChange={handleChange}
+                      placeholder="your@email.com" required
+                      className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <label className="text-sm font-medium text-gray-700">Password</label>
+                    <button type="button" onClick={() => setView('forgot')}
+                      className="text-xs text-violet-600 hover:underline">
+                      Forgot password?
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type={showPass ? 'text' : 'password'} name="password"
+                      value={patient.password} onChange={handleChange}
+                      placeholder="••••••••" required
+                      className="w-full pl-10 pr-10 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
+                    />
+                    <button type="button" onClick={() => setShowPass(!showPass)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                      {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                <button type="submit"
+                  className="w-full bg-violet-700 hover:bg-violet-800 text-white font-semibold py-3 rounded-xl transition text-sm">
+                  Sign In
                 </button>
+              </form>
+
+              <p className="text-center text-sm text-gray-500 mt-6">
+                Don't have an account?{' '}
+                <Link to="/patient-signup" className="text-violet-700 hover:underline font-semibold">Create one</Link>
+              </p>
+
+              <div className="mt-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex-1 h-px bg-gray-200" />
+                  <span className="text-xs text-gray-400">or login as</span>
+                  <div className="flex-1 h-px bg-gray-200" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <button onClick={() => navigate('/admin-login')}
+                    className="py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-100 transition">
+                    Admin Login
+                  </button>
+                  <button onClick={() => navigate('/doctor-login')}
+                    className="py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-100 transition">
+                    Doctor Login
+                  </button>
+                </div>
               </div>
-            </div>
+            </>
+          )}
 
-            <button
-              type="submit"
-              className="w-full bg-violet-700 hover:bg-violet-800 text-white font-semibold py-3 rounded-xl transition text-sm"
-            >
-              Sign In
-            </button>
-          </form>
+          {/* ── FORGOT PASSWORD VIEW ── */}
+          {view === 'forgot' && (
+            <>
+              <button onClick={goBackToLogin}
+                className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-8 transition">
+                <ArrowLeft size={16} /> Back to login
+              </button>
 
-          <p className="text-center text-sm text-gray-500 mt-6">
-            Don't have an account?{' '}
-            <Link to="/patient-signup" className="text-violet-700 hover:underline font-semibold">Create one</Link>
-          </p>
+              {forgotSent ? (
+                <div className="text-center py-6">
+                  <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle size={32} className="text-emerald-600" />
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-2">Check your email</h2>
+                  <p className="text-gray-500 text-sm mb-1">We sent a password reset link to</p>
+                  <p className="font-semibold text-gray-800 text-sm mb-6">{forgotEmail}</p>
+                  <p className="text-gray-400 text-xs">
+                    Didn't receive it?{' '}
+                    <button onClick={() => setForgotSent(false)} className="text-violet-600 underline">Try again</button>
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="mb-8">
+                    <div className="w-14 h-14 bg-violet-50 rounded-2xl flex items-center justify-center mb-4">
+                      <Mail size={26} className="text-violet-700" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900">Forgot password?</h2>
+                    <p className="text-gray-500 text-sm mt-1">
+                      Enter your email and we'll send you a reset link.
+                    </p>
+                  </div>
+
+                  {forgotError && (
+                    <div className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-xl mb-5">
+                      <AlertCircle size={15} className="shrink-0 mt-0.5" /> {forgotError}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleForgotPassword} className="space-y-5">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
+                      <div className="relative">
+                        <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                          type="email" value={forgotEmail}
+                          onChange={e => setForgotEmail(e.target.value)}
+                          placeholder="your@email.com" required
+                          className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
+                        />
+                      </div>
+                    </div>
+
+                    <button type="submit" disabled={forgotLoading}
+                      className="w-full bg-violet-700 hover:bg-violet-800 text-white font-semibold py-3 rounded-xl transition text-sm disabled:opacity-60">
+                      {forgotLoading ? 'Sending...' : 'Send Reset Link'}
+                    </button>
+                  </form>
+                </>
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>

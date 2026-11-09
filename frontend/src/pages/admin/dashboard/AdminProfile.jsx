@@ -3,12 +3,20 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Mail, ShieldCheck, CalendarDays, Clock,
-  Hash, User, Pencil, LogOut
+  Hash, User, Pencil, LogOut, Trash2, X, Save, KeyRound
 } from 'lucide-react'
 
 const AdminProfile = () => {
   const [admin, setAdmin] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editData, setEditData] = useState({ name: '', email: '' })
+  const [saving, setSaving] = useState(false)
+  const [showPwModal, setShowPwModal] = useState(false)
+  const [pwData, setPwData] = useState({ oldPassword: '', newPassword: '', confirmNewPassword: '' })
+  const [pwSaving, setPwSaving] = useState(false)
+  const [pwError, setPwError] = useState('')
+  const [pwSuccess, setPwSuccess] = useState('')
   const navigate = useNavigate()
 
   const getAdminProfile = async () => {
@@ -27,6 +35,69 @@ const AdminProfile = () => {
   useEffect(() => {
     getAdminProfile()
   }, [])
+
+  const openEditModal = () => {
+    setEditData({ name: admin.name, email: admin.email })
+    setShowEditModal(true)
+  }
+
+  const handleUpdate = async (e) => {
+    e.preventDefault()
+    setSaving(true)
+    try {
+      const response = await axios.put('http://localhost:8000/api/admin/update', editData, {
+        withCredentials: true,
+      })
+      setAdmin(response.data.admin)
+      setShowEditModal(false)
+    } catch (error) {
+      console.log(error)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!window.confirm('Are you sure you want to delete your account? This cannot be undone.')) return
+    try {
+      await axios.delete('http://localhost:8000/api/admin/delete', { withCredentials: true })
+      localStorage.removeItem('role')
+      navigate('/admin-login')
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const handleLogout = async () => {
+    try {
+      await axios.get('http://localhost:8000/api/admin/logout', { withCredentials: true })
+      localStorage.removeItem('role')
+      navigate('/admin-login')
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault()
+    setPwError('')
+    setPwSuccess('')
+    if (pwData.newPassword !== pwData.confirmNewPassword) {
+      setPwError('New passwords do not match.')
+      return
+    }
+    setPwSaving(true)
+    try {
+      await axios.put('http://localhost:8000/api/admin/update-password', pwData, { withCredentials: true })
+      setPwSuccess('Password updated successfully.')
+      setPwData({ oldPassword: '', newPassword: '', confirmNewPassword: '' })
+      setTimeout(() => { setShowPwModal(false); setPwSuccess('') }, 1500)
+    } catch (error) {
+      setPwError(error.response?.data?.message || 'Failed to update password.')
+    } finally {
+      setPwSaving(false)
+    }
+  }
 
   const formatDate = (iso) => {
     if (!iso) return '—'
@@ -48,7 +119,6 @@ const AdminProfile = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Top bar */}
       <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
         <button
           onClick={() => navigate('/admin/dashboard')}
@@ -66,7 +136,6 @@ const AdminProfile = () => {
 
       <div className="max-w-3xl mx-auto px-4 py-10">
         {loading ? (
-          /* Skeleton */
           <div className="space-y-4 animate-pulse">
             <div className="bg-white rounded-2xl p-8 flex items-center gap-6">
               <div className="w-20 h-20 rounded-full bg-gray-200" />
@@ -87,7 +156,6 @@ const AdminProfile = () => {
           </div>
         ) : admin ? (
           <div className="space-y-5">
-            {/* Profile header card */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               <div className="h-24 bg-gradient-to-r from-slate-800 to-slate-700" />
               <div className="px-8 pb-8">
@@ -96,11 +164,20 @@ const AdminProfile = () => {
                     <span className="text-white font-bold text-2xl">{initials(admin.name)}</span>
                   </div>
                   <div className="flex gap-2 mt-2">
-                    <button className="flex items-center gap-2 border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+                    <button
+                      onClick={openEditModal}
+                      className="flex items-center gap-2 border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+                    >
                       <Pencil size={14} /> Edit Profile
                     </button>
                     <button
-                      onClick={() => navigate('/admin-login')}
+                      onClick={() => { setPwError(''); setPwSuccess(''); setShowPwModal(true) }}
+                      className="flex items-center gap-2 border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+                    >
+                      <KeyRound size={14} /> Change Password
+                    </button>
+                    <button
+                      onClick={handleLogout}
                       className="flex items-center gap-2 border border-red-200 text-red-500 hover:bg-red-50 text-sm font-medium px-4 py-2 rounded-lg transition-colors"
                     >
                       <LogOut size={14} /> Logout
@@ -123,7 +200,6 @@ const AdminProfile = () => {
               </div>
             </div>
 
-            {/* Details card */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
               <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-5">
                 Account Information
@@ -146,24 +222,21 @@ const AdminProfile = () => {
               </div>
             </div>
 
-            {/* Security card */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-5">
-                Security
+            <div className="bg-white rounded-2xl shadow-sm border border-red-100 p-6">
+              <h2 className="text-sm font-semibold text-red-600 uppercase tracking-wide mb-4">
+                Danger Zone
               </h2>
-              <div className="flex items-center justify-between py-3 border-b border-gray-50">
+              <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-700">Password</p>
-                  <p className="text-xs text-gray-400 mt-0.5">Last changed on {formatDate(admin.updatedAt)}</p>
+                  <p className="text-sm font-medium text-gray-700">Delete Account</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Permanently remove your account and all data</p>
                 </div>
-                <button className="text-sm text-blue-600 font-medium hover:underline">Change</button>
-              </div>
-              <div className="flex items-center justify-between py-3">
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Two-Factor Authentication</p>
-                  <p className="text-xs text-gray-400 mt-0.5">Add extra security to your account</p>
-                </div>
-                <button className="text-sm text-blue-600 font-medium hover:underline">Enable</button>
+                <button
+                  onClick={handleDelete}
+                  className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+                >
+                  <Trash2 size={14} /> Delete Account
+                </button>
               </div>
             </div>
           </div>
@@ -177,6 +250,100 @@ const AdminProfile = () => {
           </div>
         )}
       </div>
+
+      {showPwModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-gray-900">Change Password</h3>
+              <button onClick={() => setShowPwModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+            {pwError && <p className="text-sm text-red-600 bg-red-50 border border-red-200 px-4 py-2.5 rounded-xl mb-4">{pwError}</p>}
+            {pwSuccess && <p className="text-sm text-emerald-600 bg-emerald-50 border border-emerald-200 px-4 py-2.5 rounded-xl mb-4">{pwSuccess}</p>}
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              {[
+                { label: 'Current Password',      field: 'oldPassword' },
+                { label: 'New Password',           field: 'newPassword' },
+                { label: 'Confirm New Password',   field: 'confirmNewPassword' },
+              ].map(({ label, field }) => (
+                <div key={field}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label>
+                  <input
+                    type="password"
+                    value={pwData[field]}
+                    onChange={e => setPwData({ ...pwData, [field]: e.target.value })}
+                    required
+                    className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent transition"
+                  />
+                </div>
+              ))}
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setShowPwModal(false)}
+                  className="flex-1 py-2.5 border border-gray-200 text-gray-600 text-sm font-medium rounded-xl hover:bg-gray-50 transition">
+                  Cancel
+                </button>
+                <button type="submit" disabled={pwSaving}
+                  className="flex-1 flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-900 text-white text-sm font-semibold py-2.5 rounded-xl transition disabled:opacity-60">
+                  <Save size={14} /> {pwSaving ? 'Saving...' : 'Update Password'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-gray-900">Edit Profile</h3>
+              <button onClick={() => setShowEditModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleUpdate} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Full Name</label>
+                <input
+                  type="text"
+                  value={editData.name}
+                  onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                  required
+                  className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent transition"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
+                <input
+                  type="email"
+                  value={editData.email}
+                  onChange={(e) => setEditData({ ...editData, email: e.target.value })}
+                  required
+                  className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent transition"
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="flex-1 py-2.5 border border-gray-200 text-gray-600 text-sm font-medium rounded-xl hover:bg-gray-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="flex-1 flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-900 text-white text-sm font-semibold py-2.5 rounded-xl transition disabled:opacity-60"
+                >
+                  <Save size={14} /> {saving ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

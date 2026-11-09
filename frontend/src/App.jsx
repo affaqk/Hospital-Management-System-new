@@ -19,6 +19,7 @@ import DoctorDashboard from './pages/doctor/dashboard/DoctorDashboard'
 import DoctorOverview from './pages/doctor/dashboard/DoctorOverview'
 import DoctorPatients from './pages/doctor/dashboard/DoctorPatients'
 import DoctorAppointmentDetails from './pages/doctor/dashboard/DoctorAppointmentDetails'
+import DoctorProfile from './pages/doctor/dashboard/DoctorProfile'
 
 import AdminSignup from './pages/admin/auth/AdminSignup'
 import AdminLogin from './pages/admin/auth/AdminLogin'
@@ -28,44 +29,83 @@ import AdminDoctors from './pages/admin/dashboard/AdminDoctors'
 import AdminPatients from './pages/admin/dashboard/AdminPatients'
 import AdminAppointments from './pages/admin/dashboard/AdminAppointments'
 import AdminProfile from './pages/admin/dashboard/AdminProfile'
-import DoctorProfile from './pages/doctor/dashboard/DoctorProfile'
+
+import ResetPassword from './pages/ResetPassword'
+import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public pages */}
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/services" element={<Services />} />
         <Route path="/doctors" element={<Doctors />} />
         <Route path="/appointment" element={<Appointment />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
 
-        {/* Patient */}
         <Route path="/patient-signup" element={<PatientSignup />} />
         <Route path="/patient-login" element={<PatientLogin />} />
-        <Route path="/patient/dashboard" element={<PatientDashboard />}>
+
+        <Route
+          path="/patient/dashboard"
+          element={
+            <ProtectedRoute allowedRole="patient" redirectTo="/patient-login">
+              <PatientDashboard />
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<PatientOverview />} />
           <Route path="appointments" element={<PatientAppointments />} />
           <Route path="profile" element={<PatientProfile />} />
         </Route>
 
-        {/* Doctor */}
         <Route path="/doctor-signup" element={<DoctorSignup />} />
         <Route path="/doctor-login" element={<DoctorLogin />} />
-        <Route path = "/doctor/dashboard/profile" element = {<DoctorProfile/>}/>
-        <Route path="/doctor/dashboard" element={<DoctorDashboard />}>
+
+        <Route
+          path="/doctor/dashboard/profile"
+          element={
+            <ProtectedRoute allowedRole="doctor" redirectTo="/doctor-login">
+              <DoctorProfile />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/doctor/dashboard"
+          element={
+            <ProtectedRoute allowedRole="doctor" redirectTo="/doctor-login">
+              <DoctorDashboard />
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<DoctorOverview />} />
           <Route path="patients" element={<DoctorPatients />} />
           <Route path="appointments" element={<DoctorAppointmentDetails />} />
         </Route>
 
-        {/* Admin */}
         <Route path="/admin-signup" element={<AdminSignup />} />
         <Route path="/admin-login" element={<AdminLogin />} />
-        <Route path = "/admin/dashboard/profile" element = {<AdminProfile/>}/>
-        <Route path="/admin/dashboard" element={<AdminDashboard />}>
+
+        <Route
+          path="/admin/dashboard/profile"
+          element={
+            <ProtectedRoute allowedRole="admin" redirectTo="/admin-login">
+              <AdminProfile />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/dashboard"
+          element={
+            <ProtectedRoute allowedRole="admin" redirectTo="/admin-login">
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<AdminOverview />} />
           <Route path="doctors" element={<AdminDoctors />} />
           <Route path="patients" element={<AdminPatients />} />

@@ -1,3 +1,4 @@
+import axios from 'axios'
 import { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import {
@@ -14,6 +15,16 @@ const navItems = [
 export default function PatientDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const navigate = useNavigate()
+
+  const handleLogout = async () => {
+    try {
+      await axios.get('http://localhost:8000/api/patients/logout', { withCredentials: true })
+      localStorage.removeItem('role')
+      navigate('/patient-login')
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
@@ -62,7 +73,7 @@ export default function PatientDashboard() {
           </div>
           {sidebarOpen && (
             <button
-              onClick={() => navigate('/patient-login')}
+              onClick={handleLogout}
               className="mt-3 w-full flex items-center gap-2 text-violet-400 hover:text-red-400 text-sm transition-colors"
             >
               <LogOut size={16} /> Logout

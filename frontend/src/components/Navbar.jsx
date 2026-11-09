@@ -51,7 +51,7 @@ const Navbar = () => {
               Emergency?
             </a>
             <Link
-              to="/login"
+              to="/doctor-login"
               className="px-5 py-2 border border-slate-200 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 hover:border-slate-300 transition-colors"
             >
               Login
@@ -102,7 +102,7 @@ const Navbar = () => {
           ))}
           <div className="pt-2 flex flex-col gap-2 pb-1">
             <Link
-              to="/login"
+              to="/doctor-login"
               onClick={() => setMenuOpen(false)}
               className="block text-center px-4 py-2.5 border border-slate-200 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors"
             >
